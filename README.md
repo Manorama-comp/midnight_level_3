@@ -1,6 +1,6 @@
 # 🌙 Midnight Smart Contract: Private Voting dApp
 
-[![CI Pipeline](https://github.com/USERNAME/REPO_NAME/actions/workflows/ci.yml/badge.svg)](https://github.com/USERNAME/REPO_NAME/actions/workflows/ci.yml)
+[![CI Pipeline](https://github.com/Manorama-comp/midnight_level_3/actions/workflows/main.yml/badge.svg)](https://github.com/Manorama-comp/midnight_level_3/actions/workflows/main.yml)
 
 A production-grade decentralized application on the Midnight Network showcasing a Private Voting system. This dApp features anonymous ballots with publicly verifiable tallies, demonstrating the power of zero-knowledge smart contracts on Midnight.
 
