@@ -1,0 +1,34 @@
+pragma language_version 0.15;
+
+import CompactStandardLibrary;
+
+export ledger yes_votes: Counter;
+export ledger no_votes: Counter;
+// eligible_voters mapping: maps a 32-byte invitation code (nullifier) to a flag
+export ledger eligible_voters: Map<Bytes<32>, Uint<8>>;
+
+witness local_secret_vote(): Boolean;
+witness local_invitation_code(): Bytes<32>;
+
+constructor() {}
+
+export circuit add_voter(voter_code: Bytes<32>): [] {
+    eligible_voters.insert(voter_code, 1);
+}
+
+export circuit vote(): [] {
+    let code: Bytes<32> = local_invitation_code();
+    let is_yes: Boolean = local_secret_vote();
+    
+    // The voter must provide a valid unused code.
+    assert eligible_voters.member(code), "Not an eligible voter or already voted";
+    
+    // Invalidate the code so they can't vote again.
+    eligible_voters.remove(code);
+    
+    if (is_yes) {
+        yes_votes.increment(1);
+    } else {
+        no_votes.increment(1);
+    }
+}
