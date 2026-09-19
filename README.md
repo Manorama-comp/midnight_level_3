@@ -20,7 +20,7 @@ The system uses private inputs (`witness local_invitation_code`) mapped to a has
 
 ## 🚀 Live Demo
 
-[Live Demo Link (e.g. Vercel/Netlify)](https://your-deployment-link.com)
+[Live Demo Link](https://midnight-level-3.vercel.app)
 
 ## 🎥 Demo Video
 
