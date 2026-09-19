@@ -1,11 +1,21 @@
 import { useState, useEffect } from 'react';
 import './index.css';
 
-// Mock Contract API for Voting Logic
+// Mock Contract API for Voting Logic (Persistent across refresh)
 class MockContractAPI {
-  usedNullifiers = new Set<string>();
-  yesVotes = 42;
-  noVotes = 15;
+  usedNullifiers: Set<string>;
+  yesVotes: number;
+  noVotes: number;
+
+  constructor() {
+    const savedYes = localStorage.getItem('midnight_yes_votes');
+    const savedNo = localStorage.getItem('midnight_no_votes');
+    const savedNullifiers = localStorage.getItem('midnight_nullifiers');
+
+    this.yesVotes = savedYes ? parseInt(savedYes, 10) : 0;
+    this.noVotes = savedNo ? parseInt(savedNo, 10) : 0;
+    this.usedNullifiers = savedNullifiers ? new Set(JSON.parse(savedNullifiers)) : new Set();
+  }
 
   async getTallies() {
     return new Promise(resolve => setTimeout(() => resolve({ yes: this.yesVotes, no: this.noVotes }), 500));
@@ -21,7 +31,14 @@ class MockContractAPI {
         } else {
           if (isYes) this.yesVotes++;
           else this.noVotes++;
+          
           this.usedNullifiers.add(invitationCode);
+          
+          // Save to localStorage
+          localStorage.setItem('midnight_yes_votes', this.yesVotes.toString());
+          localStorage.setItem('midnight_no_votes', this.noVotes.toString());
+          localStorage.setItem('midnight_nullifiers', JSON.stringify(Array.from(this.usedNullifiers)));
+          
           resolve(true);
         }
       }, 1500);
