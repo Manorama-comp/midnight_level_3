@@ -26,6 +26,14 @@ The system uses private inputs (`witness local_invitation_code`) mapped to a has
 
 [Link to 1-minute Demo Video](https://www.loom.com/share/44f8fabcf9cc4fc1b6d0e0039063c6b9)
 
+## 📸 Screenshots
+
+### 1. Test Output (3+ Tests Passing)
+![Test Output](test.png)
+
+### 2. CI/CD Pipeline Passing
+![CI/CD Pipeline](cicd.png)
+
 ## 🛠 Project Structure
 
 - `boilerplate/contract/` - Contains the `voting.compact` smart contract and its test suite.
