@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import './index.css';
 
-// Mock Contract API
+// Real/Mock Hybrid Contract API
 class MockContractAPI {
   yesVotes = 42;
   noVotes = 15;
@@ -32,34 +32,50 @@ function App() {
   const [tallies, setTallies] = useState({ yes: 0, no: 0 });
   const [invitationCode, setInvitationCode] = useState('');
   const [isVoting, setIsVoting] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
   const [statusMsg, setStatusMsg] = useState({ type: '', text: '' });
   
-  // Wallet Mock State
-  const [showWalletPopup, setShowWalletPopup] = useState(false);
-  const [isAuthorizing, setIsAuthorizing] = useState(false);
-
   useEffect(() => {
     api.getTallies().then((t: any) => setTallies(t));
   }, []);
 
-  const triggerWalletConnection = () => {
-    setStatusMsg({ type: '', text: '' });
-    setShowWalletPopup(true); // Show our fake wallet popup!
-  };
-
-  const handleWalletAuthorize = () => {
-    setIsAuthorizing(true);
-    // Simulate wallet connection delay
-    setTimeout(() => {
-      setIsAuthorizing(false);
-      setShowWalletPopup(false);
-      setWalletAddress("midnight-connected-address");
-    }, 1200);
-  };
-
-  const handleWalletCancel = () => {
-    setShowWalletPopup(false);
-    setStatusMsg({ type: 'error', text: 'Connection rejected by user.' });
+  const triggerWalletConnection = async () => {
+    setIsConnecting(true);
+    setStatusMsg({ type: '', text: 'Sending connection request to Wallet...' });
+    
+    try {
+      // Send REAL request to Midnight Wallet Extension (Lace/Nightly)
+      const injected = (window as any).midnight;
+      
+      if (!injected) {
+        throw new Error("No Midnight wallet found! Please install Lace or Nightly extension.");
+      }
+      
+      const walletKeys = Object.keys(injected);
+      if (walletKeys.length === 0) {
+        throw new Error("No Midnight wallets available.");
+      }
+      
+      // Select the first available wallet (mnLace or nightly)
+      const walletName = walletKeys[0];
+      const wallet = injected[walletName];
+      
+      if (wallet && typeof wallet.enable === 'function') {
+        // This sends the actual request to the extension
+        await wallet.enable();
+      } else if (wallet && typeof wallet.connect === 'function') {
+        await wallet.connect();
+      }
+      
+      setWalletAddress("connected-address");
+      setStatusMsg({ type: 'success', text: `Successfully connected to ${walletName}!` });
+      
+    } catch (error: any) {
+      console.error("Wallet connection failed", error);
+      setStatusMsg({ type: 'error', text: 'Connection rejected or failed: ' + error.message });
+    } finally {
+      setIsConnecting(false);
+    }
   };
 
   const handleVote = async (isYes: boolean) => {
@@ -80,31 +96,6 @@ function App() {
 
   return (
     <>
-      {/* Mock Midnight Wallet Popup */}
-      {showWalletPopup && (
-        <div className="modal-overlay">
-          <div className="wallet-popup">
-            <div className="wallet-header">
-              <div className="wallet-logo">M</div>
-              <div className="wallet-title">Midnight Lace</div>
-            </div>
-            <div className="wallet-content">
-              <p>
-                <span className="wallet-url">localhost:5173</span> is requesting access to connect to your Midnight wallet.
-              </p>
-              <div className="wallet-actions">
-                <button className="wallet-btn wallet-btn-cancel" onClick={handleWalletCancel} disabled={isAuthorizing}>
-                  Cancel
-                </button>
-                <button className="wallet-btn wallet-btn-auth" onClick={handleWalletAuthorize} disabled={isAuthorizing}>
-                  {isAuthorizing ? <div className="spinner" style={{ margin: '0 auto' }}></div> : 'Authorize'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       <div className="app-container">
         <div className="header">
           <div className="brand-badge">Midnight Network</div>
@@ -114,8 +105,8 @@ function App() {
 
         {!walletAddress ? (
           <div className="connect-section">
-            <button className="btn-connect" onClick={triggerWalletConnection}>
-              Connect Wallet
+            <button className="btn-connect" onClick={triggerWalletConnection} disabled={isConnecting}>
+              {isConnecting ? <div className="spinner"></div> : 'Connect Wallet'}
             </button>
           </div>
         ) : (
