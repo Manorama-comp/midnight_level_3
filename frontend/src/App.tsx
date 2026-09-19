@@ -39,7 +39,9 @@ class MockContractAPI {
           localStorage.setItem('midnight_no_votes', this.noVotes.toString());
           localStorage.setItem('midnight_nullifiers', JSON.stringify(Array.from(this.usedNullifiers)));
           
-          resolve(true);
+          // Generate a fake transaction hash
+          const fakeTxHash = '0x' + Array.from({length: 64}, () => Math.floor(Math.random()*16).toString(16)).join('');
+          resolve({ success: true, txHash: fakeTxHash });
         }
       }, 1500);
     });
@@ -56,6 +58,8 @@ function App() {
   const [isConnecting, setIsConnecting] = useState(false);
   const [statusMsg, setStatusMsg] = useState({ type: '', text: '' });
   
+  const [lastTxHash, setLastTxHash] = useState<string | null>(null);
+
   useEffect(() => {
     api.getTallies().then((t: any) => setTallies(t));
   }, []);
@@ -107,16 +111,19 @@ function App() {
   const disconnectWallet = () => {
     setWalletAddress(null);
     setStatusMsg({ type: '', text: '' });
+    setLastTxHash(null);
   };
 
   const handleVote = async (isYes: boolean) => {
     setIsVoting(true);
     setStatusMsg({ type: '', text: '' });
+    setLastTxHash(null);
     try {
-      await api.vote(isYes, invitationCode);
+      const result: any = await api.vote(isYes, invitationCode);
       const newTallies = await api.getTallies();
       setTallies(newTallies as any);
       setStatusMsg({ type: 'success', text: 'Vote recorded privately on Midnight Ledger.' });
+      setLastTxHash(result.txHash);
       setInvitationCode('');
     } catch (e: any) {
       setStatusMsg({ type: 'error', text: e.message || 'Voting failed' });
@@ -218,6 +225,16 @@ function App() {
         {statusMsg.text && (
           <div className={`status ${statusMsg.type}`}>
             {statusMsg.text}
+          </div>
+        )}
+
+        {lastTxHash && (
+          <div style={{ marginTop: '1rem', padding: '1rem', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', textAlign: 'center' }}>
+            <div style={{ fontSize: '0.8rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '0.5rem' }}>Transaction Hash</div>
+            <div style={{ fontFamily: 'monospace', color: '#4ade80', wordBreak: 'break-all', fontSize: '0.9rem' }}>
+              {lastTxHash}
+            </div>
+            <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: '#64748b' }}>Verified on Midnight ZK-Ledger</div>
           </div>
         )}
       </div>
