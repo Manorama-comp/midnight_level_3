@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import './index.css';
 
-// Real/Mock Hybrid Contract API
+// Mock Contract API for Voting Logic (since contract isn't compiled)
 class MockContractAPI {
   yesVotes = 42;
   noVotes = 15;
@@ -56,19 +56,31 @@ function App() {
         throw new Error("No Midnight wallets available.");
       }
       
-      // Select the first available wallet (mnLace or nightly)
+      // Select the first available wallet
       const walletName = walletKeys[0];
       const wallet = injected[walletName];
       
-      if (wallet && typeof wallet.enable === 'function') {
-        // This sends the actual request to the extension
-        await wallet.enable();
-      } else if (wallet && typeof wallet.connect === 'function') {
-        await wallet.connect();
-      }
+      let walletApi;
       
-      setWalletAddress("connected-address");
-      setStatusMsg({ type: 'success', text: `Successfully connected to ${walletName}!` });
+      // Trigger genuine DApp Connector API Request
+      if (wallet && typeof wallet.enable === 'function') {
+        walletApi = await wallet.enable();
+      } else if (wallet && typeof wallet.connect === 'function') {
+        walletApi = await wallet.connect();
+      } else {
+        throw new Error("Wallet provider does not support enable/connect.");
+      }
+
+      // Fetch the real Unshielded Address from the wallet!
+      if (walletApi && typeof walletApi.getUnshieldedAddress === 'function') {
+        const addressData = await walletApi.getUnshieldedAddress();
+        setWalletAddress(addressData.unshieldedAddress);
+        setStatusMsg({ type: 'success', text: `Successfully connected to ${walletName}!` });
+      } else {
+        // Fallback if API changed
+        setWalletAddress("Connected (Address Hidden)");
+        setStatusMsg({ type: 'success', text: `Connected to ${walletName} (No address permission)` });
+      }
       
     } catch (error: any) {
       console.error("Wallet connection failed", error);
@@ -76,6 +88,13 @@ function App() {
     } finally {
       setIsConnecting(false);
     }
+  };
+
+  const disconnectWallet = () => {
+    setWalletAddress(null);
+    setStatusMsg({ type: '', text: '' });
+    // Note: DApp Connector API doesn't have an explicit disconnect method to revoke,
+    // so we just clear the local UI state. The user has to revoke in the wallet if desired.
   };
 
   const handleVote = async (isYes: boolean) => {
@@ -92,6 +111,14 @@ function App() {
     } finally {
       setIsVoting(false);
     }
+  };
+
+  // Format address for display (e.g. mn1...1234)
+  const formatAddress = (addr: string) => {
+    if (addr.length > 15) {
+      return `${addr.slice(0, 10)}...${addr.slice(-6)}`;
+    }
+    return addr;
   };
 
   return (
@@ -111,6 +138,18 @@ function App() {
           </div>
         ) : (
           <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', padding: '12px 20px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
+              <div style={{ fontSize: '0.9rem', color: '#94a3b8' }}>
+                Connected: <span style={{ color: '#fff', fontWeight: 'bold', fontFamily: 'monospace', letterSpacing: '1px' }}>{formatAddress(walletAddress)}</span>
+              </div>
+              <button 
+                onClick={disconnectWallet}
+                style={{ background: 'transparent', border: '1px solid #ef4444', color: '#ef4444', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}
+              >
+                Disconnect
+              </button>
+            </div>
+
             <div className="tally-grid">
               <div className="tally-box tally-yes">
                 <div className="tally-title">Yes Votes</div>
