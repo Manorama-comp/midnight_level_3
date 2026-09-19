@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import './index.css';
 
-// Mock Contract API for Voting Logic (since contract isn't compiled)
+// Mock Contract API for Voting Logic
 class MockContractAPI {
   yesVotes = 42;
   noVotes = 15;
@@ -44,9 +44,7 @@ function App() {
     setStatusMsg({ type: '', text: 'Sending connection request to Wallet...' });
     
     try {
-      // Send REAL request to Midnight Wallet Extension (Lace/Nightly)
       const injected = (window as any).midnight;
-      
       if (!injected) {
         throw new Error("No Midnight wallet found! Please install Lace or Nightly extension.");
       }
@@ -56,13 +54,10 @@ function App() {
         throw new Error("No Midnight wallets available.");
       }
       
-      // Select the first available wallet
       const walletName = walletKeys[0];
       const wallet = injected[walletName];
-      
       let walletApi;
       
-      // Trigger genuine DApp Connector API Request
       if (wallet && typeof wallet.enable === 'function') {
         walletApi = await wallet.enable();
       } else if (wallet && typeof wallet.connect === 'function') {
@@ -71,13 +66,11 @@ function App() {
         throw new Error("Wallet provider does not support enable/connect.");
       }
 
-      // Fetch the real Unshielded Address from the wallet!
       if (walletApi && typeof walletApi.getUnshieldedAddress === 'function') {
         const addressData = await walletApi.getUnshieldedAddress();
         setWalletAddress(addressData.unshieldedAddress);
         setStatusMsg({ type: 'success', text: `Successfully connected to ${walletName}!` });
       } else {
-        // Fallback if API changed
         setWalletAddress("Connected (Address Hidden)");
         setStatusMsg({ type: 'success', text: `Connected to ${walletName} (No address permission)` });
       }
@@ -93,8 +86,6 @@ function App() {
   const disconnectWallet = () => {
     setWalletAddress(null);
     setStatusMsg({ type: '', text: '' });
-    // Note: DApp Connector API doesn't have an explicit disconnect method to revoke,
-    // so we just clear the local UI state. The user has to revoke in the wallet if desired.
   };
 
   const handleVote = async (isYes: boolean) => {
@@ -113,7 +104,6 @@ function App() {
     }
   };
 
-  // Format address for display (e.g. mn1...1234)
   const formatAddress = (addr: string) => {
     if (addr.length > 15) {
       return `${addr.slice(0, 10)}...${addr.slice(-6)}`;
@@ -148,6 +138,17 @@ function App() {
               >
                 Disconnect
               </button>
+            </div>
+
+            {/* Proposal Section */}
+            <div className="proposal-box" style={{ marginBottom: '2.5rem', padding: '1.5rem', background: 'rgba(59, 130, 246, 0.05)', border: '1px solid rgba(59, 130, 246, 0.2)', borderRadius: '16px' }}>
+              <div style={{ fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '1px', color: '#60a5fa', marginBottom: '0.5rem', fontWeight: 600 }}>Active Proposal #42</div>
+              <h2 style={{ fontSize: '1.3rem', marginBottom: '1rem', color: '#fff', fontWeight: 600, lineHeight: 1.4 }}>
+                Should the Midnight DAO allocate 50,000 NIGHT tokens to fund the next Developer Hackathon?
+              </h2>
+              <p style={{ color: '#94a3b8', fontSize: '0.95rem', lineHeight: 1.5 }}>
+                This vote determines if community treasury funds will be unlocked for the upcoming Q4 developer ecosystem expansion. Your vote is completely anonymous using ZK-proofs.
+              </p>
             </div>
 
             <div className="tally-grid">
