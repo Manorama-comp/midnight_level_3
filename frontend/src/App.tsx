@@ -3,6 +3,7 @@ import './index.css';
 
 // Mock Contract API for Voting Logic
 class MockContractAPI {
+  usedNullifiers = new Set<string>();
   yesVotes = 42;
   noVotes = 15;
 
@@ -14,10 +15,13 @@ class MockContractAPI {
     return new Promise((resolve, reject) => {
       setTimeout(() => {
         if (!invitationCode || invitationCode.length < 5) {
-          reject(new Error("Invalid invitation code. Must be at least 5 characters."));
+          reject(new Error('Invalid invitation code. Must be at least 5 characters.'));
+        } else if (this.usedNullifiers.has(invitationCode)) {
+          reject(new Error('ZK Proof Failed: Nullifier already used! (Double Voting Prevented)'));
         } else {
           if (isYes) this.yesVotes++;
           else this.noVotes++;
+          this.usedNullifiers.add(invitationCode);
           resolve(true);
         }
       }, 1500);
