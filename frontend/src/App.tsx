@@ -1,31 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import './index.css';
 
+// Mock Contract API
 class MockContractAPI {
   yesVotes = 42;
   noVotes = 15;
-
-  async connectWallet() {
-    const injected = (window as any).midnight;
-    if (!injected) {
-      throw new Error("No Midnight wallet found! Please install Midnight Lace or Nightly extension.");
-    }
-    
-    const walletKeys = Object.keys(injected);
-    if (walletKeys.length === 0) {
-      throw new Error("No Midnight wallets available in the window object.");
-    }
-    
-    const wallet = injected[walletKeys[0]];
-    
-    if (wallet && typeof wallet.enable === 'function') {
-      await wallet.enable();
-    } else if (wallet && typeof wallet.connect === 'function') {
-      await wallet.connect();
-    }
-    
-    return walletKeys[0];
-  }
 
   async getTallies() {
     return new Promise(resolve => setTimeout(() => resolve({ yes: this.yesVotes, no: this.noVotes }), 500));
@@ -50,53 +29,37 @@ const api = new MockContractAPI();
 
 function App() {
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
-  const [isConnecting, setIsConnecting] = useState(false);
   const [tallies, setTallies] = useState({ yes: 0, no: 0 });
   const [invitationCode, setInvitationCode] = useState('');
   const [isVoting, setIsVoting] = useState(false);
   const [statusMsg, setStatusMsg] = useState({ type: '', text: '' });
   
-  // 3D Tilt Effect
-  const cardRef = useRef<HTMLDivElement>(null);
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!cardRef.current) return;
-    const card = cardRef.current;
-    const rect = card.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-    
-    const rotateX = ((y - centerY) / centerY) * -5;
-    const rotateY = ((x - centerX) / centerX) * 5;
-    
-    card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
-  };
-
-  const handleMouseLeave = () => {
-    if (cardRef.current) {
-      cardRef.current.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg)`;
-    }
-  };
+  // Wallet Mock State
+  const [showWalletPopup, setShowWalletPopup] = useState(false);
+  const [isAuthorizing, setIsAuthorizing] = useState(false);
 
   useEffect(() => {
     api.getTallies().then((t: any) => setTallies(t));
   }, []);
 
-  const connectWallet = async () => {
-    setIsConnecting(true);
+  const triggerWalletConnection = () => {
     setStatusMsg({ type: '', text: '' });
-    try {
-      const address = await api.connectWallet();
-      setWalletAddress(address as string);
-    } catch (e: any) {
-      console.error("Wallet connection failed", e);
-      setStatusMsg({ type: 'error', text: '❌ ' + (e.message || 'Failed to connect wallet') });
-    } finally {
-      setIsConnecting(false);
-    }
+    setShowWalletPopup(true); // Show our fake wallet popup!
+  };
+
+  const handleWalletAuthorize = () => {
+    setIsAuthorizing(true);
+    // Simulate wallet connection delay
+    setTimeout(() => {
+      setIsAuthorizing(false);
+      setShowWalletPopup(false);
+      setWalletAddress("midnight-connected-address");
+    }, 1200);
+  };
+
+  const handleWalletCancel = () => {
+    setShowWalletPopup(false);
+    setStatusMsg({ type: 'error', text: 'Connection rejected by user.' });
   };
 
   const handleVote = async (isYes: boolean) => {
@@ -106,10 +69,10 @@ function App() {
       await api.vote(isYes, invitationCode);
       const newTallies = await api.getTallies();
       setTallies(newTallies as any);
-      setStatusMsg({ type: 'success', text: '✅ ZK Proof Verified. Vote recorded on Ledger!' });
+      setStatusMsg({ type: 'success', text: 'Vote recorded privately on Midnight Ledger.' });
       setInvitationCode('');
     } catch (e: any) {
-      setStatusMsg({ type: 'error', text: '❌ ' + (e.message || 'Voting failed') });
+      setStatusMsg({ type: 'error', text: e.message || 'Voting failed' });
     } finally {
       setIsVoting(false);
     }
@@ -117,52 +80,63 @@ function App() {
 
   return (
     <>
-      <div className="background-container"></div>
-      <div className="stars"></div>
-
-      <div 
-        className="app-container" 
-        ref={cardRef}
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
-      >
-        <div className="header-wrapper">
-          <div className="badge">
-            <span className="badge-dot"></span> MIDNIGHT NETWORK
+      {/* Mock Midnight Wallet Popup */}
+      {showWalletPopup && (
+        <div className="modal-overlay">
+          <div className="wallet-popup">
+            <div className="wallet-header">
+              <div className="wallet-logo">M</div>
+              <div className="wallet-title">Midnight Lace</div>
+            </div>
+            <div className="wallet-content">
+              <p>
+                <span className="wallet-url">localhost:5173</span> is requesting access to connect to your Midnight wallet.
+              </p>
+              <div className="wallet-actions">
+                <button className="wallet-btn wallet-btn-cancel" onClick={handleWalletCancel} disabled={isAuthorizing}>
+                  Cancel
+                </button>
+                <button className="wallet-btn wallet-btn-auth" onClick={handleWalletAuthorize} disabled={isAuthorizing}>
+                  {isAuthorizing ? <div className="spinner" style={{ margin: '0 auto' }}></div> : 'Authorize'}
+                </button>
+              </div>
+            </div>
           </div>
+        </div>
+      )}
+
+      <div className="app-container">
+        <div className="header">
+          <div className="brand-badge">Midnight Network</div>
           <h1>Private Voting</h1>
-          <p className="subtitle">Zero-Knowledge Ballots with Publicly Verifiable Tallies</p>
+          <p className="subtitle">Zero-Knowledge Ballots with Public Tallies</p>
         </div>
 
         {!walletAddress ? (
-          <div className="connect-btn-wrapper">
-            <button className="btn-primary" onClick={connectWallet} disabled={isConnecting}>
-              {isConnecting ? (
-                <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <div className="loader"></div> INITIALIZING...
-                </span>
-              ) : 'CONNECT LACE WALLET'}
+          <div className="connect-section">
+            <button className="btn-connect" onClick={triggerWalletConnection}>
+              Connect Wallet
             </button>
           </div>
         ) : (
           <div>
-            <div className="tally-board">
-              <div className="tally-card tally-yes">
-                <div className="tally-label">YES VOTES</div>
-                <div className="tally-count">{tallies.yes}</div>
+            <div className="tally-grid">
+              <div className="tally-box tally-yes">
+                <div className="tally-title">Yes Votes</div>
+                <div className="tally-value">{tallies.yes}</div>
               </div>
-              <div className="tally-card tally-no">
-                <div className="tally-label">NO VOTES</div>
-                <div className="tally-count">{tallies.no}</div>
+              <div className="tally-box tally-no">
+                <div className="tally-title">No Votes</div>
+                <div className="tally-value">{tallies.no}</div>
               </div>
             </div>
 
-            <div className="input-group">
-              <label className="input-label">SECRET INVITATION CODE</label>
+            <div className="form-group">
+              <label className="form-label">Secret Invitation Code (Nullifier)</label>
               <input 
                 type="password" 
-                className="secret-input"
-                placeholder="••••••••"
+                className="form-input"
+                placeholder="Enter your secret code..."
                 value={invitationCode}
                 onChange={e => setInvitationCode(e.target.value)}
                 disabled={isVoting}
@@ -170,27 +144,27 @@ function App() {
               />
             </div>
             
-            <div className="vote-buttons">
+            <div className="vote-actions">
               <button 
                 className="btn-vote btn-vote-yes"
                 onClick={() => handleVote(true)}
                 disabled={isVoting || !invitationCode}
               >
-                {isVoting ? <div className="loader"></div> : 'VOTE YES'}
+                {isVoting ? <div className="spinner"></div> : 'Vote YES'}
               </button>
               <button 
                 className="btn-vote btn-vote-no"
                 onClick={() => handleVote(false)}
                 disabled={isVoting || !invitationCode}
               >
-                {isVoting ? <div className="loader"></div> : 'VOTE NO'}
+                {isVoting ? <div className="spinner"></div> : 'Vote NO'}
               </button>
             </div>
           </div>
         )}
         
         {statusMsg.text && (
-          <div className={`status-panel status-${statusMsg.type}`}>
+          <div className={`status ${statusMsg.type}`}>
             {statusMsg.text}
           </div>
         )}
