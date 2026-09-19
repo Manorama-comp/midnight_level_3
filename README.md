@@ -24,7 +24,7 @@ The system uses private inputs (`witness local_invitation_code`) mapped to a has
 
 ## 🎥 Demo Video
 
-[Link to 1-minute Demo Video](https://youtube.com/...)
+[Link to 1-minute Demo Video](https://www.loom.com/share/44f8fabcf9cc4fc1b6d0e0039063c6b9)
 
 ## 🛠 Project Structure
 

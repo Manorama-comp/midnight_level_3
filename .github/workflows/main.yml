@@ -1,0 +1,42 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [20.x]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+
+    - name: Install Compact Compiler
+      run: |
+        curl -L https://github.com/midnight-ntwrk/compact/releases/download/v0.15.0/compactc-linux-amd64 -o compactc
+        chmod +x compactc
+        sudo mv compactc /usr/local/bin/
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Compile Contracts and Build
+      run: npm run build
+      
+    - name: Run Tests
+      run: npm test
+
+    - name: Verify Frontend Build
+      run: cd frontend && npm run build
