@@ -22,6 +22,11 @@ The system uses private inputs (`witness local_invitation_code`) mapped to a has
 
 [Live Demo Link](https://midnight-level-3.vercel.app)
 
+## 📜 Contract Address
+
+**Preprod Network:**
+`mn_addr_preprod192x903lfa2lm5vmxln0sd570r9zyaq2suxa53ecwh8vdfuyshf5sdpekhn`
+
 ## 🎥 Demo Video
 
 [Link to 1-minute Demo Video](https://www.loom.com/share/44f8fabcf9cc4fc1b6d0e0039063c6b9)
@@ -65,6 +70,8 @@ npm run dev
 ## ✅ Level 3 Submission Requirements Completed:
 - Fully functional dApp meaningfully using Midnight's privacy model
 - Minimum 3 tests passing (`boilerplate/contract/src/voting.test.ts`)
-- CI/CD pipeline running (`.github/workflows/ci.yml`)
+- CI/CD pipeline running (`.github/workflows/main.yml`)
 - Approved idea: Private Voting
-- Minimum 10 meaningful commits (to be pushed)
+- Minimum 10 meaningful commits pushed
+- `PROPOSAL.md` created and all questions answered
+- Deployed address provided for the Preprod network

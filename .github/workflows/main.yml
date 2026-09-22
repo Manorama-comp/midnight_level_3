@@ -32,5 +32,8 @@ jobs:
     - name: Install dependencies
       run: npm install
 
+    - name: Compile Contract
+      run: compactc boilerplate/contract/src/voting.compact -o boilerplate/contract/src/managed/voting
+
     - name: Run Tests
       run: cd boilerplate/contract && npm install && npm test
