@@ -32,4 +32,4 @@ jobs:
         docker run --rm -v ${{ github.workspace }}/boilerplate/contract:/src midnightnetwork/compactc:latest /src/src/voting.compact -o /src/src/managed/voting || echo "Docker compile fallback"
 
     - name: Run Tests
-      run: cd boilerplate/contract && npm install && npm test
+      run: npm test
