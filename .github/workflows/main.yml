@@ -23,6 +23,9 @@ jobs:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
 
+    - name: Install dependencies
+      run: npm install
+
     - name: Compile Midnight Contract (Docker)
       run: |
         docker pull midnightnetwork/compactc:latest || true
