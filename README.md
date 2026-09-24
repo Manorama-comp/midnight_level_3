@@ -25,7 +25,7 @@ The system uses private inputs (`witness local_invitation_code`) mapped to a has
 ## 📜 Contract Address
 
 **Preprod Network:**
-`mn_addr_preprod192x903lfa2lm5vmxln0sd570r9zyaq2suxa53ecwh8vdfuyshf5sdpekhn`
+`02008f5a91724a73e4b70db64e43e2e8e94553b9bf1335c024d0ad42398bf234`
 
 ## 🎥 Demo Video
 
