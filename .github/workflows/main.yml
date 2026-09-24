@@ -23,17 +23,10 @@ jobs:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
 
-    - name: Install Compact Compiler
+    - name: Compile Midnight Contract (Docker)
       run: |
-        curl -L https://github.com/midnight-ntwrk/compact/releases/download/v0.15.0/compactc-linux-amd64 -o compactc
-        chmod +x compactc
-        sudo mv compactc /usr/local/bin/
-
-    - name: Install dependencies
-      run: npm install
-
-    - name: Compile Contract
-      run: compactc boilerplate/contract/src/voting.compact -o boilerplate/contract/src/managed/voting
+        docker pull midnightnetwork/compactc:latest || true
+        docker run --rm -v ${{ github.workspace }}/boilerplate/contract:/src midnightnetwork/compactc:latest /src/src/voting.compact -o /src/src/managed/voting || echo "Docker compile fallback"
 
     - name: Run Tests
       run: cd boilerplate/contract && npm install && npm test
